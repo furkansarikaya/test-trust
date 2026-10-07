@@ -33,7 +33,7 @@ Out of scope by design: coverage percentages, suggesting missing tests, and test
 
 ## Example report
 
-The `REPORT.md` from a real run on the Go fixture (Claude Code, macOS), shortened. Numbers and findings are unchanged; links point into the audited repo's `.test-trust/` folder.
+The `REPORT.md` from a real run on the Go fixture (Claude Code, macOS), shortened. Numbers and findings are unchanged; evidence links were removed.
 
 > **Can I trust these tests? — scope `.` (example.com/shop)**
 >
