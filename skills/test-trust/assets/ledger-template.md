@@ -10,6 +10,7 @@ Update after every step. This file is the resume point and the audit trail.
 - Started: <date and time>
 - Commit `.test-trust/`: <user's answer, first run only>
 - Worktree: <path while the hollow stage runs; "none" otherwise>
+- Linked dependency folders: <relative paths symlinked into the worktree, or "none">
 
 ## Toolchain probe
 
@@ -52,7 +53,7 @@ Update after every step. This file is the resume point and the audit trail.
 
 ### Hollow targets
 
-| Unit | Priority | Mutations | Covering tests | Result |
+| Unit | Priority | Mutations | Covering tests (flaky ones removed) | Result |
 |---|---|---|---|---|
 | | | | | |
 

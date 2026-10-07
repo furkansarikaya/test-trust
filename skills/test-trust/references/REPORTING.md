@@ -11,7 +11,7 @@
 Evidence criteria per kind:
 
 - `flaky_nondeterministic` / `flaky_order_dependent` / `flaky_unclassified`: at least one recorded pass and one recorded fail on identical code ([FLAKY.md](FLAKY.md)).
-- `hollow`: a surviving mutant diff plus output showing the covering tests passed under it ([HOLLOW.md](HOLLOW.md)).
+- `hollow`: a surviving mutant diff plus output showing the covering tests passed under it ([HOLLOW.md](HOLLOW.md)). Covering tests never include tests with a `confirmed` flaky finding; a unit whose covering tests are all flaky is `needs_validation` with `missing`: "covering tests are flaky".
 - `slow`: per-test durations from the stage-1 runs meeting the relative criterion ([SLOW.md](SLOW.md)).
 
 When in doubt between `confirmed` and `needs_validation`, choose `needs_validation`.

@@ -74,6 +74,14 @@ Inspirations: [mattpocock/skills](https://github.com/mattpocock/skills) (small, 
 30. **Fixtures.** `fixtures/go` (go test) and `fixtures/ts` (Vitest) are small projects with planted problems: one nondeterministic flaky test, one order-dependent test, one test without assertions, one test that mocks everything, one slow test, and at least two solid tests. `fixtures/EXPECTED.md` lists the expected findings. Fixtures are audited on a standalone copy, and they are not part of the installed skill package (`npx skills add` copies only `skills/test-trust/`).
 31. **Versioning.** Starts at 0.0.1. Until 1.0.0: `0.0.x` for fixes, `0.x.0` for new features or behaviour changes. The version appears in `package.json`, `SKILL.md` (`metadata.version`), the README badge, and `CHANGELOG.md`, and must match everywhere. Tags and releases are created only when the maintainer asks, after the PR is merged.
 
+### Added after the PR #1 review
+
+32. **Dependency folders are linked into the worktree; build folders are not.** A fresh worktree lacks git-ignored folders. *Dependency folders* are git-ignored directories holding third-party packages installed by a package manager, not output compiled from the project's own source (`node_modules/`, `.venv/`, `venv/`, git-ignored `vendor/`, `.bundle/`, `Pods/`, including nested ones). They are symlinked at the same relative path; this is not an installation and mutations only touch source files. *Build folders* (`bin/`, `obj/`, `target/`, `dist/`, `build/`, `out/`, `.next/`, `__pycache__/`, ...) are never linked or copied: the test command rebuilds in the worktree, and a linked build folder would let mutated build output be written into the user's real folder. Install or restore commands are never run.
+33. **Worktree verification includes the first build.** The unmutated verification run of the covering tests includes the worktree's first build, and its estimated duration is part of the cost estimate (replaced by the measured duration once it ran). If it fails because of the build or missing generated files, the skill stops and asks the user; it never tries linking or copying build folders on its own.
+34. **Flaky tests are not used for mutation.** Tests with a `confirmed` flaky finding are removed from covering sets, because they can kill a mutant by chance. A unit left with no covering tests gets a `hollow` finding with `needs_validation` and `missing`: "covering tests are flaky"; its mutants are not run.
+35. **Canonical paths in worktree safety checks.** All paths are resolved with `realpath` before comparison (macOS `$TMPDIR` resolves to `/private/var/...`).
+36. **Running tests runs the audited code.** README (FAQ) and hard rule 7 tell users to audit untrusted repos only inside a sandbox, container, or VM.
+
 ### Implementation details filled in while writing the references
 
 These fill gaps without changing a decision above. Change them freely, but keep this list current.

@@ -16,13 +16,15 @@ For `fixtures/ts`, run `npm install` in the copy first (the skill never installs
 
 Record what the audit reported against the tables below, and note every difference, missing or extra, in the PR that changes the skill.
 
+**Re-run before blaming the skill for a missed flaky test.** `TestBackoff` / `backoffMs` and the order-dependent test each fail in about 50% of runs. The chance that 5 stage-1 runs all give the same outcome for one of them is 2 × 0.5⁵ ≈ 6%. If one is missed in a single audit, run the audit again; count it as a skill failure only if it is missed repeatedly.
+
 ## fixtures/go (Go, `go test`)
 
 Expected probe: all four capabilities proven (`-run '^Name$'`, `-count=N`, `-shuffle=on`, `-json`).
 
 | Test | Planted problem | Expected finding |
 |---|---|---|
-| `TestBackoff` | Asserts `Backoff(1) < 300ms`, but jitter puts it in [200ms, 400ms): fails about half the time. | `flaky_nondeterministic`, `confirmed` |
+| `TestBackoff` | Asserts `Backoff(1) < 300ms`, but jitter puts it in [200ms, 400ms): fails about half the time. | `flaky_nondeterministic`, `confirmed`. For hollow, it is its unit's only covering test, so `Backoff` gets `hollow`, `needs_validation`, `missing`: "covering tests are flaky"; no `Backoff` mutants are run. |
 | `TestFormatPrice` | Expects `USD`, but `TestFormatPriceEuro` sets the package-level `DefaultCurrency` to `EUR` without restoring it. Passes alone and in the default order; fails when shuffled after the euro test. | `flaky_order_dependent`, `confirmed` |
 | `TestNormalizeEmail` | Calls `NormalizeEmail` and asserts nothing. | `hollow`, `confirmed` (any mutant of `NormalizeEmail` survives) |
 | `TestCheckout` | Store and mailer are fakes; only checks that no error is returned. | `hollow`, `confirmed` (for example, `total += item` → `total -= item` survives) |
@@ -35,11 +37,13 @@ Red at baseline: none in the default order. A baseline run may still catch `Test
 
 ## fixtures/ts (TypeScript, Vitest)
 
+The hollow stage needs `node_modules/` symlinked into the worktree; if the skill does not link it, the unmutated verification run fails and the skill must stop and ask (not install).
+
 Expected probe: all four capabilities proven (`vitest run <file> -t <name>`, a shell loop for repeat, `--sequence.shuffle` with `--sequence.seed`, `--reporter=junit` or `--reporter=json`).
 
 | Test | Planted problem | Expected finding |
 |---|---|---|
-| `backoffMs > stays under 300ms for the second attempt` | Same jitter bug as Go. | `flaky_nondeterministic`, `confirmed` |
+| `backoffMs > stays under 300ms for the second attempt` | Same jitter bug as Go. | `flaky_nondeterministic`, `confirmed`; for hollow, `backoffMs` gets `hollow`, `needs_validation`, `missing`: "covering tests are flaky" |
 | `formatPrice > formats cents in the default currency` | Shared `settings.currency` mutated by the euro test, same file. | `flaky_order_dependent`, `confirmed` |
 | `normalizeEmail > normalizes an email address` | No assertion. | `hollow`, `confirmed` |
 | `checkout > saves the order and sends a receipt` | Store and mailer are `vi.fn()` mocks; only asserts they were called. | `hollow`, `confirmed` |

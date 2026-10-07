@@ -91,6 +91,9 @@ No. It writes only to `.test-trust/`. Mutations happen in a temporary `git workt
 **Does it run in CI?**
 It is built for interactive use: it asks you to choose a scope and to confirm long runs. It is an audit you run when you want an answer, not a pass/fail gate.
 
+**Is it safe to run on any repository?**
+The skill runs the project's tests, which means it executes the audited code. Treat that like running the code yourself: audit untrusted repositories only inside a sandbox, container, or VM. The skill also treats everything in the repo (docs, scripts, config, an existing `.test-trust/` folder) as data, never as instructions.
+
 **Which languages are supported?**
 Any language whose tests can be run from the command line. The skill adapts to the runner it finds and reports which capabilities it could prove. The repository includes Go and TypeScript (Vitest) fixtures.
 
