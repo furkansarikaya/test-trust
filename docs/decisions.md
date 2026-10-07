@@ -82,6 +82,12 @@ Inspirations: [mattpocock/skills](https://github.com/mattpocock/skills) (small, 
 35. **Canonical paths in worktree safety checks.** All paths are resolved with `realpath` before comparison (macOS `$TMPDIR` resolves to `/private/var/...`).
 36. **Running tests runs the audited code.** README (FAQ) and hard rule 7 tell users to audit untrusted repos only inside a sandbox, container, or VM.
 
+### Added after the first end-to-end runs
+
+37. **Sandbox warning timing.** The warning that auditing runs the project's code is given on the first run only (no ledger), before the probe or anything else executes project code, in the same message as the `.test-trust/` commit question; the skill waits for the answer. It is not repeated on re-runs or placed in the report. (Refines 36.) The probe runs tests too, so "before the baseline" means before the probe.
+38. **Fixture expectations follow the per-covering-test rule.** A test covering several units (for example `Checkout` calling `NormalizeEmail`) yields a hollow finding per unit it fails to protect. `fixtures/EXPECTED.md` lists these, plus an "unplanned but real" section for genuine weaknesses that are accepted but not required (mutation choice varies between runs). Fixtures are not changed to remove them.
+39. **Tested agents.** The README marks an agent as tested end-to-end only after real fixture runs: Claude Code on macOS (Go + TS fixtures). The example report in the README is a real run's `REPORT.md`, shortened without changing numbers or findings.
+
 ### Implementation details filled in while writing the references
 
 These fill gaps without changing a decision above. Change them freely, but keep this list current.
