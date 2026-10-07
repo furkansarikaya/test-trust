@@ -1,0 +1,15 @@
+{
+  "name": "test-trust",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Agent skill that audits whether your tests can be trusted: flaky, hollow and slow tests, each proven with runnable evidence.",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/furkansarikaya/test-trust.git"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\""
+  }
+}
