@@ -12,4 +12,6 @@ First release.
 - Confirmed flaky tests are never used as covering tests for mutation; units covered only by flaky tests are `needs_validation`.
 - Tests run sequentially with baseline-derived timeouts. The README and skill warn that auditing runs the audited code: untrusted repos belong in a sandbox, container, or VM.
 - Ledger template, `findings.json` schema, and an optional dependency-free validator.
-- Go and TypeScript fixtures with planted problems and their expected findings.
+- Go and TypeScript fixtures with planted problems and their expected findings, including findings that follow from shared units and accepted unplanned ones.
+- The sandbox warning is given on the first run before any project code executes, together with the `.test-trust/` commit question.
+- First end-to-end runs on both fixtures (Claude Code, macOS); README shows the real Go report.

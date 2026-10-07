@@ -33,7 +33,42 @@ Out of scope by design: coverage percentages, suggesting missing tests, and test
 
 ## Example report
 
-Coming after the first real run on the [fixtures](fixtures/).
+The `REPORT.md` from a real run on the Go fixture (Claude Code, macOS), shortened. Numbers and findings are unchanged; links point into the audited repo's `.test-trust/` folder.
+
+> **Can I trust these tests? — scope `.` (example.com/shop)**
+>
+> **Answer.** **No, not yet.** Of the 8 tests, 2 are flaky, 1 is slow, and 3 are hollow for at least one unit. `TestBackoff` fails about a third of the time even when run alone. `TestFormatPrice` fails whenever `TestFormatPriceEuro` runs before it. `TestNormalizeEmail` and `TestCheckout` stay green when `NormalizeEmail` returns `""`, when `Checkout` stops saving the order and stops sending the receipt, and when the discount is skipped. `TestFormatPriceEuro` stays green when cents are no longer zero-padded. Only the tests for `ApplyDiscount`, `ParseAmount` and `Reconcile` caught every mutation.
+>
+> **Scope.** `.` (single package `example.com/shop`), commit `8c41a42`, working tree clean · 8 tests, baseline 1.61 s wall (including build) · test command: Go ecosystem default `go test .` (no CI, Makefile or README found)
+>
+> **Capabilities.** Single test proven (`-run '^TestX$'`) · repeat proven (`-count=1`, no cache) · shuffle proven (`-shuffle=on`, seeds recorded) · per-test duration proven (`-json`, 10 ms resolution). Nothing unsupported.
+>
+> **Confirmed findings**
+>
+> *Flaky*
+> - **F001** `TestBackoff` (`flaky_nondeterministic`): 13 pass / 7 fail across 20 isolated runs. Example failure: `Backoff(1) = 392.986369ms, want under 300ms`.
+> - **F002** `TestFormatPrice` (`flaky_order_dependent`): 20/20 pass alone. In the suite it failed in all 3 runs where `TestFormatPriceEuro` ran first (`"12.50 EUR"`) and passed in both runs where it ran after. Failing seed `1791379313604369000`, passing seed `1791379315675513000`.
+>
+> *Slow*
+> - **F003** `TestReconcile`: 1000 ms in all 5 runs, 100× the scope median (10 ms, the reporter's resolution) and 100% of the measured total. The body calls `time.Sleep(time.Second)`. With only 8 tests in scope the relative rules are coarse, but here the gap is unambiguous.
+>
+> *Hollow*
+> - **F004** `TestNormalizeEmail` × `NormalizeEmail`: 3/3 mutants survived (drop `ToLower`, drop `TrimSpace`, return `""`). The test has no assertion.
+> - **F005** `TestCheckout` × `NormalizeEmail`: the same 3/3 mutants survived.
+> - **F006** `TestCheckout` × `Checkout`: 4/4 survived (delete `store.Save`, delete `mailer.Send`, skip `ApplyDiscount`, return `Order{}`). Only `err` is checked.
+> - **F007** `TestFormatPriceEuro` × `FormatPrice`: 1 of 3 survived. With `%02d` → `%d`, `5` cents renders as `0.5`, but the only input tested is `1250`.
+> - **F008** `TestCheckout` × `FormatPrice`: the same mutant survived.
+>
+> **Needs validation**
+> - **F009** `TestBackoff` × `Backoff` (`hollow`): not mutation-tested because the only covering test is flaky (F001).
+>
+> **Red at baseline.** None persistently. `TestBackoff` was red at baseline but passed in later runs (see F001).
+>
+> **Cleared.** Hollow: 3 (F010 `ApplyDiscount`, F011 `ParseAmount`, F012 `Reconcile`). Every mutant was killed. One `ParseAmount` mutant (m3) was killed only by the compiler; the other three were killed by tests.
+>
+> **Notes.** All runs were sequential. No stage was skipped or limited. This is the first run, so nothing was carried forward. `TestFormatPrice` was removed from the `FormatPrice` covering set because it is flaky (F002).
+
+The TypeScript run also found a weakness nobody planted: the `formatPrice` tests only use `1250`, so removing the `padStart` zero padding stays green.
 
 ## Installation
 
@@ -53,7 +88,7 @@ The audit is long, runs many commands, and temporarily mutates code (in a worktr
 
 | Agent | Invoke with | How implicit invocation is turned off | Tested end-to-end |
 |---|---|---|---|
-| Claude Code | `/test-trust <scope>` | `disable-model-invocation: true` in `SKILL.md` | Not yet |
+| Claude Code | `/test-trust <scope>` | `disable-model-invocation: true` in `SKILL.md` | Yes (Go + TS fixtures, macOS) |
 | Codex | `$test-trust <scope>` | `policy.allow_implicit_invocation: false` in `agents/openai.yaml` | Not yet |
 | Any Agent Skills compatible agent | The agent's own skill invocation, or "Use the test-trust skill on `<scope>`" | Depends on the agent; `disable-model-invocation` is a Claude Code extension others may ignore | Not yet |
 

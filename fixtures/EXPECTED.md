@@ -27,7 +27,7 @@ Expected probe: all four capabilities proven (`-run '^Name$'`, `-count=N`, `-shu
 | `TestBackoff` | Asserts `Backoff(1) < 300ms`, but jitter puts it in [200ms, 400ms): fails about half the time. | `flaky_nondeterministic`, `confirmed`. For hollow, it is its unit's only covering test, so `Backoff` gets `hollow`, `needs_validation`, `missing`: "covering tests are flaky"; no `Backoff` mutants are run. |
 | `TestFormatPrice` | Expects `USD`, but `TestFormatPriceEuro` sets the package-level `DefaultCurrency` to `EUR` without restoring it. Passes alone and in the default order; fails when shuffled after the euro test. | `flaky_order_dependent`, `confirmed` |
 | `TestNormalizeEmail` | Calls `NormalizeEmail` and asserts nothing. | `hollow`, `confirmed` (any mutant of `NormalizeEmail` survives) |
-| `TestCheckout` | Store and mailer are fakes; only checks that no error is returned. | `hollow`, `confirmed` (for example, `total += item` → `total -= item` survives) |
+| `TestCheckout` | Store and mailer are fakes; only checks that no error is returned. | `hollow`, `confirmed` for `Checkout` (for example, `total += item` → `total -= item` survives), and also `hollow`, `confirmed` for `NormalizeEmail`: `Checkout` calls it, so `TestCheckout` covers that unit and stays green under its mutants (one finding per covering test that stays green) |
 | `TestReconcile` | Sleeps 1 s; every other test takes well under 10 ms. | `slow`, `confirmed`; `Reconcile` mutants are killed (cleared for hollow) |
 | `TestApplyDiscount` | Solid: boundary cases 9999, 10000, 20000, 0. | No finding; `ApplyDiscount` mutants killed |
 | `TestParseAmount` | Solid: valid and invalid inputs. | No finding; `ParseAmount` mutants killed |
@@ -46,11 +46,18 @@ Expected probe: all four capabilities proven (`vitest run <file> -t <name>`, a s
 | `backoffMs > stays under 300ms for the second attempt` | Same jitter bug as Go. | `flaky_nondeterministic`, `confirmed`; for hollow, `backoffMs` gets `hollow`, `needs_validation`, `missing`: "covering tests are flaky" |
 | `formatPrice > formats cents in the default currency` | Shared `settings.currency` mutated by the euro test, same file. | `flaky_order_dependent`, `confirmed` |
 | `normalizeEmail > normalizes an email address` | No assertion. | `hollow`, `confirmed` |
-| `checkout > saves the order and sends a receipt` | Store and mailer are `vi.fn()` mocks; only asserts they were called. | `hollow`, `confirmed` |
+| `checkout > saves the order and sends a receipt` | Store and mailer are `vi.fn()` mocks; only asserts they were called. | `hollow`, `confirmed` for `checkout`, and also for `normalizeEmail` (called by `checkout`, same rule as Go) |
 | `reconcile > returns charged minus settled` | Waits 1 s. | `slow`, `confirmed`; `reconcile` mutants killed |
 | `applyDiscount(...)` (4 cases) | Solid. | No finding |
 | `parseAmount > parses valid amounts` / `rejects invalid amounts` | Solid. | No finding |
 | `formatPrice > formats cents in euros` | Polluter, stable outcome. | No finding |
+
+## Unplanned but real
+
+Findings that were not planted on purpose but are genuine. They are **accepted, not required**: mutation choice varies between runs, so an audit may or may not hit them. Do not change the fixtures to remove them.
+
+- **Go, `FormatPrice`:** `TestFormatPriceEuro` (and `TestCheckout`, which calls `FormatPrice`) only use `1250`, so a mutant dropping the zero padding (`%02d` → `%d`) stays green. Reported as `hollow`, `confirmed` on those tests for `FormatPrice`. (`TestFormatPrice` is excluded from the covering set because it is flaky.)
+- **TS, `formatPrice`:** same weakness: removing `padStart(2, "0")` stays green because only `1250` is tested.
 
 ## What counts as a failure of the skill
 
